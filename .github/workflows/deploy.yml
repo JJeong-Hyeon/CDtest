@@ -1,23 +1,27 @@
 name: Deploy to EC2
+
 on:
   push:
-    branches: [ main ]      
-  workflow_dispatch:         
-# main에 push될 때만 배포
-# 수동 실행 버튼(테스트용)
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: SSH로 EC2 배포
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            set -e                              
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
             cd /var/www/mysite
-            git pull origin main                
-            sudo nginx -t                       
-            sudo systemctl reload nginx 
+            git pull origin main
+            sudo nginx -t
+            sudo systemctl reload nginx
+          EOF
