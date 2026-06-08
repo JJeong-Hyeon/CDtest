@@ -1,0 +1,33 @@
+name: Lunch Menu Bot
+
+on:
+  schedule:
+    # 한국 시간 평일 오전 9시
+    # GitHub Actions schedule은 UTC 기준이라 KST 09:00 = UTC 00:00
+    - cron: "0 0 * * 1-5"
+
+  workflow_dispatch:
+
+jobs:
+  lunch-menu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 레포 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 패키지 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 오늘의 점심 메뉴 스크래핑 후 Teams 전송
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          python scripts/lunch_menu_bot.py
